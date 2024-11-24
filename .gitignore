@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.ipynb_checkpoints
+
+# Environnements virtuels
+venv/
+env/
+chatbot_env/
+
+# Configurations sensibles
+*.env
+config.json
+secret_key.txt
+
+# Modèles et fichiers volumineux
+*.ckpt
+*.bin
+models/
+data/
+checkpoints/
+
+# Logs et fichiers temporaires
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+
+# Fichiers compilés
+*.o
+*.out
+*.a
+*.so
+*.dll
