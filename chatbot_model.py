@@ -1,63 +1,60 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import BitsAndBytesConfig
-from accelerate import infer_auto_device_map
 import torch
 
-# Configuration du modèle
+# Charger le modèle et le tokenizer
 model_name = "EleutherAI/gpt-neo-2.7B"
+tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side="left")
 
-# Chargement du tokenizer
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+# Résolution du problème de pad_token
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
 
-# Configuration pour quantization (8 bits)
-bnb_config = BitsAndBytesConfig(load_in_8bit=True)
-
-# Chargement du modèle avec accélération
-device_map = "auto"  # Permet de répartir le modèle entre GPU et CPU
+# Charger le modèle en pleine précision ou 16 bits si un GPU est disponible
+device = "cuda" if torch.cuda.is_available() else "cpu"
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, device_map=device_map, quantization_config=bnb_config
-)
+    model_name, torch_dtype=torch.float16 if device == "cuda" else torch.float32
+).to(device)
 
-# Définir les tokens spéciaux
-if model.config.pad_token_id is None:
-    model.config.pad_token_id = model.config.eos_token_id
 
-if tokenizer.pad_token is None:  # Ajouter un token de padding si manquant
-    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-    model.resize_token_embeddings(len(tokenizer))  # Redimensionner les embeddings
+# Fonction pour générer une réponse
+def generate_response(prompt, max_new_tokens=50):
+    # Tokeniser l'entrée avec attention_mask explicite
+    inputs = tokenizer(prompt, return_tensors="pt", padding=True).to(device)
 
-# Boucle conversationnelle
-print("Bonjour, comment puis-je vous aider aujourd'hui ?.")
-while True:
-    # Entrée utilisateur
-    user_input = input("Vous: ").strip()
-
-    if user_input.lower() == "quit":
-        print("Au revoir !")
-        break
-
-    if not user_input:  # Gestion des entrées vides
-        print("Chatbot: Désolé, je n'ai pas compris votre message.")
-        continue
-
-    # Préparation des entrées pour le modèle
-    inputs = tokenizer(user_input, return_tensors="pt", padding=True, truncation=True)
-
-    # Génération de la réponse
+    # Générer une réponse avec contrôle des répétitions
     outputs = model.generate(
-        inputs.input_ids.to(
-            model.device
-        ),  # Les ID doivent être sur le même appareil que le modèle
-        attention_mask=inputs.attention_mask.to(
-            model.device
-        ),  # Fournir le masque d'attention
-        max_length=200,
-        num_return_sequences=1,
-        pad_token_id=model.config.pad_token_id,
-        eos_token_id=model.config.eos_token_id,
-        no_repeat_ngram_size=2,  # Empêche la répétition de phrases
+        inputs.input_ids,
+        attention_mask=inputs.attention_mask,
+        max_new_tokens=max_new_tokens,
+        temperature=0.5,
+        top_p=0.8,
+        do_sample=True,
+        repetition_penalty=1.2,  # Réduit les répétitions
+        pad_token_id=tokenizer.pad_token_id,
+        eos_token_id=tokenizer.eos_token_id,
     )
 
-    # Décodage de la réponse
+    # Décoder et renvoyer le texte généré
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    print(f"Chatbot: {response}")
+    return response.strip()
+
+
+def chatbot():
+    print("Bonjour, comment puis-je vous aider aujourd'hui ?")
+
+    while True:
+        user_input = input("Vous: ")
+        if user_input.lower() in ["quit", "exit", "stop"]:
+            print("Chatbot: Merci pour cette conversation. À bientôt !")
+            break
+
+        # Construire un prompt simple et efficace
+        prompt = f"{user_input}\nRéponse :"
+
+        # Générer et afficher la réponse
+        response = generate_response(prompt)
+        print(f"Chatbot: {response}")
+
+
+if __name__ == "__main__":
+    chatbot()
