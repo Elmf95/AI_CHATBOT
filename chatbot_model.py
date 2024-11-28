@@ -1,16 +1,39 @@
+from langchain_community.llms import LlamaCpp
 from llama_cpp import Llama
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+
+# Chemins vers les fichiers et modèles
+MODEL_PATH = "C:/models/Llama-2-7B-GGUF"
+FAISS_INDEX_PATH = r"C:\Users\USER\Documents\faiss_index"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+
+# Charger le modèle d'embedding
+print("Chargement du modèle d'embedding...")
+embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+
+# Charger l'index FAISS
+print("Chargement de l'index FAISS...")
+vector_store = FAISS.load_local(
+    FAISS_INDEX_PATH,
+    embedding_model,
+    allow_dangerous_deserialization=True,  # Autoriser explicitement la désérialisation
+)
+print("Index FAISS chargé avec succès.")
+
+# Charger le modèle Llama-2 avec extension de la taille du contexte
+print("Chargement du modèle Llama-2-7B-GGUF...")
 
 
-MODEL_PATH = "C:/models/kunoichi-7b.Q8_0.gguf"
+# Llama avec une plus grande limite de contexte
+llm = Llama(model_path=MODEL_PATH, n_ctx=4096, n_gpu_layers=-1)
+print("Modèle GGUF Llama-2-7B chargé avec succès ! Vous pouvez commencer à discuter.")
 
 
 def interactive_chat():
     """
-    Lance une boucle interactive de discussion avec le modèle GGUF.
+    Lance une boucle interactive de discussion avec le modèle et l'index FAISS.
     """
-    print("Chargement du modèle... Cela peut prendre un moment.")
-    llm = Llama(model_path=MODEL_PATH)
-    print("Modèle chargé avec succès ! Vous pouvez commencer à discuter.")
     print("Tapez 'quit' pour quitter la conversation.\n")
 
     conversation_context = ""  # Qui garde le contexte de la discussion
@@ -21,13 +44,23 @@ def interactive_chat():
             print("Fin de la conversation. À bientôt !")
             break
 
-        # Construire le prompt en ajoutant le contexte de la conversation
-        prompt = conversation_context + f"User: {user_input}\nAI:"
-        response = llm(prompt, max_tokens=200, stop=["User:"])["choices"][0][
+        # Recherche dans FAISS
+        docs = vector_store.similarity_search(user_input, k=3)
+        context = "\n".join([doc.page_content for doc in docs])
+
+        # Tronquer le contexte pour ne pas dépasser la limite de tokens
+        # On garde un maximum de 4096 tokens, ce qui doit être ajusté en fonction des tokens par extrait
+        truncated_context = context[:4096]
+
+        # Construire le prompt avec le contexte tronqué
+        prompt = f"Contexte : {truncated_context}\nUser: {user_input}\nAI:"
+
+        # Générer la réponse à partir du modèle
+        response = llm(prompt, max_tokens=100, stop=["User:"])["choices"][0][
             "text"
         ].strip()
 
-        # Affiche la réponse et met à jour le contexte
+        # Afficher la réponse et mettre à jour le contexte
         print(f"Modèle: {response}")
         conversation_context += f"User: {user_input}\nAI: {response}\n"
 
