@@ -1,6 +1,6 @@
 from llama_cpp import Llama
 
-# Remplacez par le chemin de votre modèle GGUF
+
 MODEL_PATH = "C:/models/kunoichi-7b.Q8_0.gguf"
 
 
