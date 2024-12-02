@@ -27,7 +27,7 @@ print("Modèle Kunoichi-7B chargé avec succès.")
 
 
 # Fonction pour troncation dynamique du contexte
-def truncate_context(docs, max_tokens=3000):
+def truncate_context(docs, max_tokens=1000):
     """
     Tronque les documents pour ne pas dépasser une limite de tokens.
     """
@@ -82,7 +82,7 @@ def interactive_chat():
 
         # Recherche des documents pertinents dans FAISS
         print("Recherche des documents pertinents...")
-        k = 15  # Ajustez dynamiquement en fonction des besoins
+        k = 5  # Ajustez dynamiquement en fonction des besoins
         docs = vector_store.similarity_search(user_input, k=k)
         print(f"{len(docs)} documents pertinents trouvés.")
 
@@ -117,7 +117,7 @@ def interactive_chat():
             print("Génération de la réponse en cours...")
             response = llm(
                 prompt,
-                max_tokens=800,
+                max_tokens=1000,
                 temperature=0.4,  # Baissez pour des réponses plus cohérentes
                 top_k=50,  # Élargir les options de génération
                 top_p=0.9,  # Réduire les options pour plus de précision
