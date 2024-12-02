@@ -2,6 +2,12 @@
   "git": {
     "submodules": true
   },
+
+  
+  "env": {
+    "DISABLE_PYWIN32": "true"  
+  },
+
   "builds":[
     {
       "src": "chatbot_ui.py",  
