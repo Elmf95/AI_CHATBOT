@@ -1,0 +1,15 @@
+{
+  "git": {
+    "submodules": true
+  },
+
+  "builds":[
+    {
+      "src": "chatbot_ui.py",  
+      "use": "@vercel/python", 
+      "config": {
+        "command": "streamlit run chatbot_ui.py" 
+      }
+    }
+    ]
+}
