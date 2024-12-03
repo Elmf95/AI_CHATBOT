@@ -8,12 +8,10 @@ PDF_PATH = r"C:\Users\USER\Documents\codes.pdf"
 OUTPUT_FOLDER = r"C:\Users\USER\Documents\text_chunks"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-BATCH_SIZE = 500  # Nombre de pages par lot
-CHUNK_SIZE = 1000  # Nombre de caractères par chunk
-CHUNK_OVERLAP = 200  # Chevauchement des chunks
-MAX_WORKERS = (
-    8  # Nombre de threads pour le traitement parallèle (ajusté pour votre CPU)
-)
+BATCH_SIZE = 500
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 200
+MAX_WORKERS = 8
 
 
 def extract_pages(pdf_path, start, end):

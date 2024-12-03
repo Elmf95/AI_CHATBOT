@@ -82,11 +82,11 @@ def interactive_chat():
 
         # Recherche des documents pertinents dans FAISS
         print("Recherche des documents pertinents...")
-        k = 5  # Ajustez dynamiquement en fonction des besoins
+        k = 5
         docs = vector_store.similarity_search(user_input, k=k)
         print(f"{len(docs)} documents pertinents trouvés.")
 
-        # Construction du contexte avec troncation dynamique
+        # Construction du contexte
         print("Construction du contexte tronqué...")
         context = truncate_context(docs)
         print("Contexte chargé.")
@@ -118,9 +118,9 @@ def interactive_chat():
             response = llm(
                 prompt,
                 max_tokens=1000,
-                temperature=0.4,  # Baissez pour des réponses plus cohérentes
-                top_k=50,  # Élargir les options de génération
-                top_p=0.9,  # Réduire les options pour plus de précision
+                temperature=0.4,
+                top_k=50,
+                top_p=0.9,
                 stop=["Utilisateur :"],
             )["choices"][0]["text"].strip()
         except Exception as e:
@@ -129,7 +129,6 @@ def interactive_chat():
 
         print(f"IA : {response}")
 
-        # Ajouter au contexte de l'historique
         conversation_history.append((user_input, response))
 
 

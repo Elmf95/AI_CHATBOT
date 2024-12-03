@@ -68,11 +68,9 @@ if "conversation_history" not in st.session_state:
 user_input = st.text_input("Votre question :", key="user_input")
 if st.button("Envoyer"):
     if user_input:
-        # Recherche des documents pertinents
         st.write("Recherche des documents pertinents...")
         docs = vector_store.similarity_search(user_input, k=5)
 
-        # Construction du contexte
         st.write("Construction du contexte...")
         context = truncate_context(docs)
 
